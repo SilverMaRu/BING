@@ -2,23 +2,23 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public delegate void ActivityBaseDelegate(BaseActivity sender, ActivityEventDate eventDate);
+public delegate void ActivityBaseDelegate(ActivityBase sender, ActivityEventDate eventDate);
 
-public class BaseActivity
+public class ActivityBase
 {
     public static event ActivityBaseDelegate EnterActivityEvent;
     public static event ActivityBaseDelegate ExitActivityEvent;
     protected GameObject ownerGO;
-    protected BaseActivityInfo activityInfo;
+    protected ActivityBaseInfo activityInfo;
     protected ActivityManager activityManager { get { return ownerGO.GetComponent<ActivityManager>(); } }
     protected Animator animator { get { return ownerGO.GetComponent<Animator>(); } }
 
-    public BaseActivity(GameObject ownerGO)
+    public ActivityBase(GameObject ownerGO)
     {
         this.ownerGO = ownerGO;
         activityInfo = FindActivityInfo();
     }
-    public BaseActivity(GameObject ownerGO, BaseActivityInfo activityInfo)
+    public ActivityBase(GameObject ownerGO, ActivityBaseInfo activityInfo)
     {
         this.ownerGO = ownerGO;
         this.activityInfo = activityInfo;
@@ -32,15 +32,11 @@ public class BaseActivity
     public virtual void EnterActivity()
     {
         Debug.Log("Enter " + GetType().Name);
-        //#region 离开当前行为
-        //BaseActivity[] currentActivitys = null;
-        //if (activityManager.TryGetCurrentActivity(out currentActivitys)) currentActivitys.ExitActivity();
-        //#endregion 离开当前行为
         #region 如果动画机参数类型为Trigger/Bool, 则触发/设为true
         switch (activityInfo.animatorParamType)
         {
-            case BaseActivityInfo.ParamType.Bool:
-            case BaseActivityInfo.ParamType.Trigger:
+            case ParamType.Bool:
+            case ParamType.Trigger:
                 SetAnimatorParam(1);
                 break;
         }
@@ -57,7 +53,8 @@ public class BaseActivity
         #endregion 发送事件
     }
 
-    public virtual void Update() {
+    public virtual void Update()
+    {
         // 如果达到了离开条件, 执行离开
         if (MeetExitCondition()) ExitActivity();
     }
@@ -71,7 +68,7 @@ public class BaseActivity
     {
         Debug.Log("Exit " + GetType().Name);
         #region 如果动画机参数类型为Bool, 则设置为false
-        if (activityInfo.animatorParamType == BaseActivityInfo.ParamType.Bool) SetAnimatorParam(0);
+        if (activityInfo.animatorParamType == ParamType.Bool) SetAnimatorParam(0);
         #endregion 如果动画机参数类型为Bool, 则设置为false
         #region 把该行为从当前行为列表中移除
         activityManager.ExitActivity(this);
@@ -89,7 +86,7 @@ public class BaseActivity
     /// 从项目中查找并返回行为信息
     /// </summary>
     /// <returns></returns>
-    protected virtual BaseActivityInfo FindActivityInfo()
+    protected virtual ActivityBaseInfo FindActivityInfo()
     {
         return null;
     }
@@ -108,35 +105,23 @@ public class BaseActivity
         string paramName = activityInfo.animatorParamName;
         switch (activityInfo.animatorParamType)
         {
-            case BaseActivityInfo.ParamType.Int:
+            case ParamType.Int:
                 animator.SetInteger(paramName, (int)value);
                 break;
-            case BaseActivityInfo.ParamType.Float:
+            case ParamType.Float:
                 animator.SetFloat(paramName, value, dampTime, deltaTime);
                 break;
-            case BaseActivityInfo.ParamType.Bool:
+            case ParamType.Bool:
                 animator.SetBool(paramName, value > 0);
                 break;
-            case BaseActivityInfo.ParamType.Trigger:
+            case ParamType.Trigger:
                 animator.SetTrigger(paramName);
                 break;
         }
     }
 }
 
-public class BaseActivityInfo
-{
-    public enum ParamType { Int, Float, Bool, Trigger }
-    public string animatorParamName;
-    public ParamType animatorParamType = ParamType.Float;
-
-    public BaseActivityInfo() { }
-    public BaseActivityInfo(string animatorParamName, ParamType animatorParamType)
-    {
-        this.animatorParamName = animatorParamName;
-        this.animatorParamType = animatorParamType;
-    }
-}
+public enum ParamType { Int, Float, Bool, Trigger }
 
 public class ActivityEventDate
 {

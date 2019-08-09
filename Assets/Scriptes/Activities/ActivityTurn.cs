@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ActivityTurn : BaseActivity
+public class ActivityTurn : ActivityBase
 {
     private Vector3 inputDirection
     {
@@ -18,18 +18,21 @@ public class ActivityTurn : BaseActivity
     {
     }
 
-    public ActivityTurn(GameObject ownerGO, BaseActivityInfo activityInfo) : base(ownerGO, activityInfo)
+    public ActivityTurn(GameObject ownerGO, ActivityBaseInfo activityInfo) : base(ownerGO, activityInfo)
     {
     }
 
     public override bool MeetEnterCondition()
     {
-        return Vector3.Dot(inputDirection, ownerGO.transform.forward) < 1;
+        return Vector3.Dot(inputDirection, ownerGO.transform.forward) < 1
+            && animator.GetBool("OnGround")
+            ;
     }
 
     public override void EnterActivity()
     {
         base.EnterActivity();
+        animator.applyRootMotion = true;
         if (smoothStop != null) activityManager.StopCoroutine(smoothStop);
     }
 
@@ -43,7 +46,9 @@ public class ActivityTurn : BaseActivity
 
     public override bool MeetExitCondition()
     {
-        return Vector3.Dot(inputDirection, ownerGO.transform.forward) >= 1;
+        return Vector3.Dot(inputDirection, ownerGO.transform.forward) >= 1
+            || !animator.GetBool("OnGround")
+            ;
     }
 
     public override void ExitActivity()

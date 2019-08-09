@@ -6,30 +6,31 @@ using System;
 public class ActivityManager : MonoBehaviour
 {
     private readonly Type typeOfGameObject = typeof(GameObject);
-    private readonly Type[] typeOfOwnActivities = new Type[] { typeof(ActivityMove)
-        , typeof(ActivityTurn)
-    };
 
-    private BaseActivityInfo[] ownActiviyInfos = new BaseActivityInfo[] { new BaseActivityInfo("Forward", BaseActivityInfo.ParamType.Float)
-    , new BaseActivityInfo("Turn", BaseActivityInfo.ParamType.Float)
-    };
-    private BaseActivity[] ownActivities = new BaseActivity[0];
-    private List<BaseActivity> listenActivityList = new List<BaseActivity>();
-    public BaseActivity[] listenActivities { get { return listenActivityList.ToArray(); } }
-    private List<BaseActivity> currentActivityList = new List<BaseActivity>(1);
-    public BaseActivity[] currentActivities { get { return currentActivityList.ToArray(); } }
-    public bool hasActivity { get { return currentActivityList.Count > 0; } }
+    public ActivityBaseInfo[] ownActiviyInfos;
+    private ActivityBase[] ownActivities = new ActivityBase[0];
+
+    private List<ActivityBase> listenActivityList = new List<ActivityBase>();
+    public ActivityBase[] listenActivities { get { return listenActivityList.ToArray(); } }
+
+    private List<ActivityBase> currentActivityList = new List<ActivityBase>(1);
+    public ActivityBase[] currentActivities { get { return currentActivityList.ToArray(); } }
+
+    public bool loopingActivity { get { return currentActivityList.Count > 0; } }
+
+    public bool isPunishing { get; set; }
+
     private GameObject rootGO;
 
     // Start is called before the first frame update
     void Start()
     {
         rootGO = gameObject;
-        int ownActivityCount = typeOfOwnActivities.Length;
-        ownActivities = new BaseActivity[ownActivityCount];
+        int ownActivityCount = ownActiviyInfos.Length;
+        ownActivities = new ActivityBase[ownActivityCount];
         for (int i = 0; i < ownActivityCount; i++)
         {
-            ownActivities[i] = CreateActivity(typeOfOwnActivities[i], ownActiviyInfos[i]);
+            ownActivities[i] = CreateActivity(TypeHelper.GetType(ownActiviyInfos[i].activityTypeName), ownActiviyInfos[i]);
         }
         listenActivityList.AddRange(ownActivities);
     }
@@ -37,31 +38,39 @@ public class ActivityManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        foreach (BaseActivity tempActivity in listenActivities)
+        foreach (ActivityBase tempActivity in listenActivities)
         {
             if (tempActivity.MeetEnterCondition()) tempActivity.EnterActivity();
         }
-        foreach (BaseActivity tempActivity in currentActivities)
+        foreach (ActivityBase tempActivity in currentActivities)
         {
             tempActivity.Update();
         }
+        //for(int i = 0; i < listenActivities.Length; i++)
+        //{
+        //    if (listenActivities[i].MeetEnterCondition()) listenActivities[i].EnterActivity();
+        //}
+        //for (int i = 0; i < currentActivities.Length; i++)
+        //{
+        //    currentActivities[i].Update();
+        //}
     }
 
-    private BaseActivity CreateActivity(Type activityType, BaseActivityInfo activityInfo)
+    private ActivityBase CreateActivity(Type activityType, ActivityBaseInfo activityInfo)
     {
         Type[] cstrTypes = new Type[] { typeOfGameObject, activityInfo.GetType() };
         object[] cstrValues = new object[] { rootGO, activityInfo };
-        BaseActivity resultActivity = (BaseActivity)activityType.GetConstructor(cstrTypes).Invoke(cstrValues);
+        ActivityBase resultActivity = (ActivityBase)activityType.GetConstructor(cstrTypes).Invoke(cstrValues);
         return resultActivity;
     }
 
-    public void EnterActivity(BaseActivity enterActivity)
+    public void EnterActivity(ActivityBase enterActivity)
     {
         listenActivityList.Remove(enterActivity);
         if (!currentActivityList.Contains(enterActivity)) currentActivityList.Add(enterActivity);
     }
 
-    public void ExitActivity(BaseActivity exitActivity)
+    public void ExitActivity(ActivityBase exitActivity)
     {
         if (currentActivityList.Contains(exitActivity)) currentActivityList.Remove(exitActivity);
         listenActivityList.Add(exitActivity);
