@@ -15,8 +15,11 @@ MonoBehaviour:
   activityTypeName: ActivityRun
   animatorParamName: Forward
   animatorParamType: 1
-  reviseRecoverSPValue: -10
-  reviseMode: 0
+  reviseInfo:
+    reviseField: 2
+    reviseValue: -10
+    reviseMode: 0
+    computeMode: 0
   enterPunishValue: 0
   enterPunishPercent: 0
   exitPunishValue: 0

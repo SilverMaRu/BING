@@ -4,21 +4,53 @@ using UnityEngine;
 
 public delegate void MaxAttributesChangeDelegate(float currentValue);
 public delegate void CurrentAttributesChangeDelegate(float currentValue, float maxValue);
+public delegate void PlayerFactionChangeDelegate(PlayerFaction currentFaction);
 public class AttributesManager : MonoBehaviour
 {
+    private static List<AttributesManager> _allAttrManager = new List<AttributesManager>();
+    public static AttributesManager[] allAttrManager { get { return _allAttrManager.ToArray(); } }
     public event MaxAttributesChangeDelegate MaxSPChangeEvent;
     public event CurrentAttributesChangeDelegate CurrentSPChangeEvent;
+    public event PlayerFactionChangeDelegate PlayerFactionChangeEvent;
 
-    public Attributes useAttributes;
-    public PlayerFaction faction = PlayerFaction.People;
-    private Attributes attr;
-    private List<float> reviseMaxSPList = new List<float>();
+    public Attributes peopleAttributes;
+    public Attributes ghostAttributes;
+    private PlayerFaction _faction = PlayerFaction.People;
+    public PlayerFaction faction
+    {
+        get
+        {
+            return _faction;
+        }
+        set
+        {
+            _faction = value;
+            PlayerFactionChangeEvent?.Invoke(_faction);
+        }
+    }
     private Dictionary<long, float> receiptReviseMaxSPPairs = new Dictionary<long, float>();
+    public float baseMaxSP
+    {
+        get
+        {
+            float resultValue = 0;
+            switch (faction)
+            {
+                case PlayerFaction.People:
+                    resultValue = peopleAttributes.maxSP;
+                    break;
+                case PlayerFaction.Ghost:
+                    resultValue = ghostAttributes.maxSP;
+                    break;
+            }
+            return resultValue;
+        }
+    }
     public float maxSP
     {
         get
         {
-            float finalMaxSP = attr.maxSP;
+            float finalMaxSP = baseMaxSP;
             float[] reviseMaxSPArray = new float[receiptReviseMaxSPPairs.Count];
             receiptReviseMaxSPPairs.Values.CopyTo(reviseMaxSPArray, 0);
             foreach (float tempRevise in reviseMaxSPArray)
@@ -38,13 +70,29 @@ public class AttributesManager : MonoBehaviour
             CurrentSPChangeEvent?.Invoke(_currentSP, maxSP);
         }
     }
-    private List<float> reviseRecoverSPList = new List<float>();
     private Dictionary<long, float> receiptReviseRecoverSPPairs = new Dictionary<long, float>();
+    public float baseRecoverSP
+    {
+        get
+        {
+            float resultValue = 0;
+            switch (faction)
+            {
+                case PlayerFaction.People:
+                    resultValue = peopleAttributes.recoverSP;
+                    break;
+                case PlayerFaction.Ghost:
+                    resultValue = ghostAttributes.recoverSP;
+                    break;
+            }
+            return resultValue;
+        }
+    }
     public float recoverSP
     {
         get
         {
-            float finalRecoverSP = attr.recoverSP;
+            float finalRecoverSP = baseRecoverSP;
             float[] reviseRecoverSPArray = new float[receiptReviseRecoverSPPairs.Count];
             receiptReviseRecoverSPPairs.Values.CopyTo(reviseRecoverSPArray, 0);
             foreach (float tempRevise in reviseRecoverSPArray)
@@ -54,13 +102,29 @@ public class AttributesManager : MonoBehaviour
             return finalRecoverSP;
         }
     }
-    private List<float> reviseTimeScaleList = new List<float>();
     private Dictionary<long, float> receiptReviseTimeScalePairs = new Dictionary<long, float>();
+    public float baseTimeScale
+    {
+        get
+        {
+            float resultValue = 0;
+            switch (faction)
+            {
+                case PlayerFaction.People:
+                    resultValue = peopleAttributes.timeScale;
+                    break;
+                case PlayerFaction.Ghost:
+                    resultValue = ghostAttributes.timeScale;
+                    break;
+            }
+            return resultValue;
+        }
+    }
     public float timeScale
     {
         get
         {
-            float finalTimeScale = attr.timeScale;
+            float finalTimeScale = baseTimeScale;
             float[] reviseTimeScaleArray = new float[receiptReviseTimeScalePairs.Count];
             receiptReviseTimeScalePairs.Values.CopyTo(reviseTimeScaleArray, 0);
             foreach (float tempRevise in reviseTimeScaleArray)
@@ -74,8 +138,8 @@ public class AttributesManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        attr = useAttributes.Clone();
-        currentSP = attr.maxSP;
+        //peopleAttributes = ghostAttributes.Clone();
+        currentSP = maxSP;
     }
 
     // Update is called once per frame
@@ -84,7 +148,7 @@ public class AttributesManager : MonoBehaviour
         currentSP += recoverSP * Time.deltaTime * timeScale;
     }
 
-    public long AddRevise(ReviseField reviseField, float reviseValue, ReviseMode reviseMode)
+    public long AddRevise(ReviseField reviseField, float reviseValue, ReviseType reviseMode, ComputeMode computeMode)
     {
         long receipt = -1;
         switch (reviseField)
@@ -93,7 +157,7 @@ public class AttributesManager : MonoBehaviour
                 receipt = AddReviseMaxSP(reviseValue, reviseMode);
                 break;
             case ReviseField.CurrentSP:
-                ReviseCurrentSP(reviseValue, reviseMode);
+                ReviseCurrentSP(reviseValue, reviseMode, computeMode);
                 break;
             case ReviseField.RecoverSP:
                 receipt = AddReviseRecoverSP(reviseValue, reviseMode);
@@ -104,6 +168,11 @@ public class AttributesManager : MonoBehaviour
         }
 
         return receipt;
+    }
+
+    public long AddRevise(ReviseInfo info)
+    {
+        return AddRevise(info.reviseField, info.reviseValue, info.reviseMode, info.computeMode);
     }
 
     public void RemoveRevise(ReviseField reviseField, long receipt)
@@ -122,16 +191,23 @@ public class AttributesManager : MonoBehaviour
         }
     }
 
-    public long AddReviseMaxSP(float reviseValue, ReviseMode reviseMode)
+    public void RemoveAllRevise()
+    {
+        receiptReviseMaxSPPairs.Clear();
+        receiptReviseRecoverSPPairs.Clear();
+        receiptReviseTimeScalePairs.Clear();
+    }
+
+    public long AddReviseMaxSP(float reviseValue, ReviseType reviseMode)
     {
         long receipt = System.DateTime.Now.ToBinary();
         float revise = reviseValue;
         switch (reviseMode)
         {
-            case ReviseMode.PERCENT_BASE:
-                revise = attr.maxSP * reviseValue;
+            case ReviseType.PercentBase:
+                revise = baseMaxSP * reviseValue;
                 break;
-            case ReviseMode.PERCENT_CURRENT:
+            case ReviseType.PercentCurrent:
                 revise = maxSP * reviseValue;
                 break;
         }
@@ -149,31 +225,49 @@ public class AttributesManager : MonoBehaviour
         }
     }
 
-    public void ReviseCurrentSP(float reviseValue, ReviseMode reviseMode)
+    public void ReviseCurrentSP(float reviseValue, ReviseType reviseMode, ComputeMode computeMode)
     {
         float revise = reviseValue;
         switch (reviseMode)
         {
-            case ReviseMode.PERCENT_BASE:
+            case ReviseType.PercentBase:
                 revise = maxSP * reviseValue;
                 break;
-            case ReviseMode.PERCENT_CURRENT:
+            case ReviseType.PercentCurrent:
                 revise = currentSP * reviseValue;
                 break;
+            case ReviseType.PercentUsed:
+                revise = (maxSP - currentSP) * reviseValue;
+                break;
         }
-        currentSP += revise;
+        switch (computeMode)
+        {
+            case ComputeMode.Add:
+                currentSP += revise;
+                break;
+            case ComputeMode.Set:
+                if (revise <= 0)
+                {
+                    currentSP = Mathf.Min(currentSP, -revise);
+                }
+                else
+                {
+                    currentSP = Mathf.Max(currentSP, revise);
+                }
+                break;
+        }
     }
 
-    public long AddReviseRecoverSP(float reviseValue, ReviseMode reviseMode)
+    public long AddReviseRecoverSP(float reviseValue, ReviseType reviseMode)
     {
         long receipt = System.DateTime.Now.ToBinary();
         float revise = reviseValue;
         switch (reviseMode)
         {
-            case ReviseMode.PERCENT_BASE:
-                revise = attr.recoverSP * reviseValue;
+            case ReviseType.PercentBase:
+                revise = baseRecoverSP * reviseValue;
                 break;
-            case ReviseMode.PERCENT_CURRENT:
+            case ReviseType.PercentCurrent:
                 revise = recoverSP * reviseValue;
                 break;
         }
@@ -186,16 +280,16 @@ public class AttributesManager : MonoBehaviour
         if (receiptReviseRecoverSPPairs.ContainsKey(receipt)) receiptReviseRecoverSPPairs.Remove(receipt);
     }
 
-    public long AddReviseTimeScale(float reviseValue, ReviseMode reviseMode)
+    public long AddReviseTimeScale(float reviseValue, ReviseType reviseMode)
     {
         long receipt = System.DateTime.Now.ToBinary();
         float revise = reviseValue;
         switch (reviseMode)
         {
-            case ReviseMode.PERCENT_BASE:
-                revise = attr.timeScale * reviseValue;
+            case ReviseType.PercentBase:
+                revise = baseTimeScale * reviseValue;
                 break;
-            case ReviseMode.PERCENT_CURRENT:
+            case ReviseType.PercentCurrent:
                 revise = timeScale * reviseValue;
                 break;
         }
@@ -207,13 +301,94 @@ public class AttributesManager : MonoBehaviour
     {
         if (receiptReviseTimeScalePairs.ContainsKey(receipt)) receiptReviseTimeScalePairs.Remove(receipt);
     }
+
+    public static AttributesManager[] GetFactionAllAttrManager(PlayerFaction faction)
+    {
+        List<AttributesManager> factionAttrManager = new List<AttributesManager>();
+        foreach (AttributesManager tempAttrManager in allAttrManager)
+        {
+            if (tempAttrManager.faction == faction)
+            {
+                factionAttrManager.Add(tempAttrManager);
+            }
+        }
+        return factionAttrManager.ToArray();
+    }
+
+    public static PlayerFaction GetEnemyFaction(PlayerFaction myFaction)
+    {
+        PlayerFaction enemyFaction = PlayerFaction.Ghost;
+        switch (myFaction)
+        {
+            case PlayerFaction.People:
+                enemyFaction = PlayerFaction.Ghost;
+                break;
+            case PlayerFaction.Ghost:
+                enemyFaction = PlayerFaction.People;
+                break;
+        }
+        return enemyFaction;
+    }
+
+    public static AttributesManager FindNearbyPlayer(PlayerFaction targetFaction, Vector3 center, float radius)
+    {
+        AttributesManager resultAttrManager = null;
+        AttributesManager[] teammateAttrManager = GetFactionAllAttrManager(targetFaction);
+        bool onePeopleFaction = teammateAttrManager.Length <= 1;
+        float currentSqrRadius = Mathf.Sqrt(radius);
+        foreach (AttributesManager tempTeammate in teammateAttrManager)
+        {
+            Vector3 centerToTeammate = tempTeammate.transform.position - center;
+            float sqrMagnitude = centerToTeammate.sqrMagnitude;
+            if (!onePeopleFaction && sqrMagnitude != 0 && sqrMagnitude <= currentSqrRadius)
+            {
+                resultAttrManager = tempTeammate;
+                currentSqrRadius = sqrMagnitude;
+            }
+            else if (onePeopleFaction)
+            {
+                resultAttrManager = tempTeammate;
+            }
+        }
+        return resultAttrManager;
+    }
+
+    public static AttributesManager[] FindRangePlayer(PlayerFaction targetFaction, Vector3 center, float radius)
+    {
+        List<AttributesManager> rangeTeammateList = new List<AttributesManager>();
+        AttributesManager[] teammateAttrManager = AttributesManager.GetFactionAllAttrManager(targetFaction);
+        float sqrRadius = Mathf.Sqrt(radius);
+        foreach (AttributesManager tempTeammate in teammateAttrManager)
+        {
+            Vector3 centerToTeammate = tempTeammate.transform.position - center;
+            float sqrMagnitude = centerToTeammate.sqrMagnitude;
+            if (sqrMagnitude <= sqrRadius) rangeTeammateList.Add(tempTeammate);
+        }
+        return rangeTeammateList.ToArray();
+    }
 }
 
-public enum ReviseMode
+[System.Serializable]
+public class ReviseInfo
 {
-    NORMAL,
-    PERCENT_BASE,
-    PERCENT_CURRENT
+    public ReviseField reviseField = ReviseField.CurrentSP;
+    public float reviseValue = 0;
+    public ReviseType reviseMode = ReviseType.Normal;
+    public ComputeMode computeMode = ComputeMode.Add;
+}
+
+public enum ReviseType
+{
+    Normal,
+    PercentBase,
+    PercentCurrent,
+    PercentUsed
+}
+
+public enum ComputeMode
+{
+    Add,
+    Set
 }
 
 public enum ReviseField

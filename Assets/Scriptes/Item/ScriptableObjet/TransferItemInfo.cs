@@ -9,19 +9,23 @@ public class TransferItemInfo : ItemBaseInfo
     public float newPositionY;
     public float newPositionZ;
 
-    public TransferItemInfo Clone()
+    public Vector3 GetPosition()
     {
-        TransferItemInfo cloneInfo = CreateInstance<TransferItemInfo>();
-        cloneInfo.itemName = itemName;
-        cloneInfo.itemID = itemID;
+        return new Vector3(newPositionX, newPositionY, newPositionZ);
+    }
+
+    public override ItemBaseInfo Clone()
+    {
+        TransferItemInfo cloneInfo = (TransferItemInfo)base.Clone();
         cloneInfo.newPositionX = newPositionX;
         cloneInfo.newPositionY = newPositionY;
         cloneInfo.newPositionZ = newPositionZ;
         return cloneInfo;
     }
 
-    public Vector3 GetPosition()
+    public override void Use(AttributesManager effectAttrManager)
     {
-        return new Vector3(newPositionX, newPositionY, newPositionZ);
+        base.Use(effectAttrManager);
+        effectAttrManager.transform.position = GetPosition();
     }
 }

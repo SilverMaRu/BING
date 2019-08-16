@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PickUp : MonoBehaviour
+public class PickUp : MonoBehaviour, IPoolWater
 {
-    public ItemBaseInfo info;
+    public ObjectPool ownerPool { get; set; }
+    public ItemGroup itemGroup;
 
     private Rigidbody rgBody;
     private Collider coll;
+
 
     private void Awake()
     {
@@ -16,14 +18,14 @@ public class PickUp : MonoBehaviour
         ChangeToRigidbodyCollision();
     }
 
-    private void OnEnable()
-    {
-        ChangeToRigidbodyCollision();
-    }
+    //private void OnEnable()
+    //{
+    //    ChangeToRigidbodyCollision();
+    //}
 
     private void OnCollisionEnter(Collision collision)
     {
-        if(collision.gameObject.layer == 9)
+        if (collision.gameObject.layer == 9)
         {
             ChangeToKinematicTrigger();
         }
@@ -33,7 +35,13 @@ public class PickUp : MonoBehaviour
     {
         if (other.tag.Equals("Player"))
         {
-            gameObject.SetActive(false);
+            BackpackManager backpackManager = other.GetComponent<BackpackManager>();
+            if (backpackManager != null && backpackManager.canPickUp)
+            {
+                //gameObject.SetActive(false);
+                Rest();
+                GoBack();
+            }
         }
     }
 
@@ -49,5 +57,22 @@ public class PickUp : MonoBehaviour
     {
         rgBody.isKinematic = true;
         coll.isTrigger = true;
+    }
+
+    public void Work()
+    {
+        gameObject.SetActive(true);
+        ChangeToRigidbodyCollision();
+    }
+
+    public void Rest()
+    {
+        gameObject.SetActive(false);
+    }
+
+    public void GoBack()
+    {
+        gameObject.SetActive(false);
+        ownerPool.ComeBack(this);
     }
 }

@@ -6,6 +6,7 @@ using System;
 public class ActivityManager : MonoBehaviour
 {
     private readonly Type typeOfGameObject = typeof(GameObject);
+    public Action<int> OnAnimatorIKAction;
 
     public ActivityBaseInfo[] ownActiviyInfos;
     private ActivityBase[] ownActivities = new ActivityBase[0];
@@ -26,6 +27,7 @@ public class ActivityManager : MonoBehaviour
     void Start()
     {
         rootGO = gameObject;
+
         int ownActivityCount = ownActiviyInfos.Length;
         ownActivities = new ActivityBase[ownActivityCount];
         for (int i = 0; i < ownActivityCount; i++)
@@ -46,14 +48,6 @@ public class ActivityManager : MonoBehaviour
         {
             tempActivity.Update();
         }
-        //for(int i = 0; i < listenActivities.Length; i++)
-        //{
-        //    if (listenActivities[i].MeetEnterCondition()) listenActivities[i].EnterActivity();
-        //}
-        //for (int i = 0; i < currentActivities.Length; i++)
-        //{
-        //    currentActivities[i].Update();
-        //}
     }
 
     private ActivityBase CreateActivity(Type activityType, ActivityBaseInfo activityInfo)
@@ -74,5 +68,10 @@ public class ActivityManager : MonoBehaviour
     {
         if (currentActivityList.Contains(exitActivity)) currentActivityList.Remove(exitActivity);
         listenActivityList.Add(exitActivity);
+    }
+
+    private void OnAnimatorIK(int layerIndex)
+    {
+        OnAnimatorIKAction?.Invoke(layerIndex);
     }
 }

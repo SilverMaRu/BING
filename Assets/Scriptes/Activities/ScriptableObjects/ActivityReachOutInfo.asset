@@ -9,18 +9,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: db82bd3210dff074b9abd7b2a8fcf061, type: 3}
-  m_Name: ActivityWalkInfo
+  m_Script: {fileID: 11500000, guid: 14998b2d8b974f74484ca83da16fc4da, type: 3}
+  m_Name: ActivityReachOutInfo
   m_EditorClassIdentifier: 
-  activityTypeName: ActivityWalk
-  animatorParamName: Forward
-  animatorParamType: 1
+  activityTypeName: ActivityReachOut
+  animatorParamName: 
+  animatorParamType: 0
   reviseInfo:
-    reviseField: 2
-    reviseValue: -3
+    reviseField: 1
+    reviseValue: -5
     reviseMode: 0
     computeMode: 0
-  enterPunishValue: 0
-  enterPunishPercent: 0
-  exitPunishValue: 0
-  exitPunishPercent: 0.5
+  IKGameObjectName: ReachOutIK
+  effectGoal: 3
+  reachOutUseTime: 2
+  countermandUseTime: 0.5

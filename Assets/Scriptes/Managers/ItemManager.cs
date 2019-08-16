@@ -4,12 +4,19 @@ using UnityEngine;
 
 public class ItemManager : MonoBehaviour
 {
+    public ObjectPool pickUpItemPool;
     public int testSpawNum = 100;
     public ItemInfoList itemInfoBase;
     private ItemBaseInfo[] itemInfos;
 
+    public int minItemGroupCount = 1;
+    public int maxItemGroupCount = 999;
+
     public GameObject itemPrefab;
     public ItemSpawRange rangeInfo;
+
+    private GameObject[] playerGOs;
+    private List<GameObject> scenePickUpList = new List<GameObject>();
 
     private void Awake()
     {
@@ -20,6 +27,11 @@ public class ItemManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        playerGOs = GameObject.FindGameObjectsWithTag("Player");
+        foreach (GameObject tempPlayerGO in playerGOs)
+        {
+            tempPlayerGO.GetComponent<BackpackManager>().PickUpEvent += OnPickUp;
+        }
     }
 
     // Update is called once per frame
@@ -29,7 +41,8 @@ public class ItemManager : MonoBehaviour
         {
             for (int i = 0; i < testSpawNum; i++)
             {
-                CreateItem();
+                scenePickUpList.Add(CreateItem());
+
             }
         }
     }
@@ -43,14 +56,29 @@ public class ItemManager : MonoBehaviour
     public GameObject CreateItem(int index)
     {
         Vector3 position = rangeInfo.RandomPosition();
-        GameObject newItem = Instantiate(itemPrefab, position, Quaternion.identity);
+        //GameObject newItem = Instantiate(itemPrefab, position, Quaternion.identity);
+        GameObject newItem = pickUpItemPool.Borrow(position, Quaternion.identity, pickUpItemPool.transform);
+        int count = Random.Range(minItemGroupCount, maxItemGroupCount + 1);
         PickUp item = newItem.GetComponent<PickUp>();
-        item.info = itemInfos[index];
+        item.itemGroup = new ItemGroup(itemInfos[index].Clone(), count);
         return newItem;
+    }
+
+    private void OnPickUp(BackpackManager sender, PickUpEventDate eventDate)
+    {
+        switch (eventDate.pickerFaction)
+        {
+            case PlayerFaction.People:
+                scenePickUpList.Remove(eventDate.pickUpItem.gameObject);
+                break;
+            case PlayerFaction.Ghost:
+                scenePickUpList.Clear();
+                break;
+        }
     }
 }
 
-public enum RangeType
+public enum SpawRangeType
 {
     Cube,
     Sphere,
@@ -60,7 +88,7 @@ public enum RangeType
 [System.Serializable]
 public class ItemSpawRange
 {
-    public RangeType rangeType = RangeType.Cylinder;
+    public SpawRangeType rangeType = SpawRangeType.Cylinder;
     public Vector3 center = Vector3.zero;
     public Vector3 extents = Vector3.zero;
 
@@ -72,20 +100,20 @@ public class ItemSpawRange
         float randomZ = 0;
         switch (rangeType)
         {
-            case RangeType.Cube:
+            case SpawRangeType.Cube:
                 randomX = Random.Range(-1f, 1f);
                 randomY = Random.Range(-1f, 1f);
                 randomZ = Random.Range(-1f, 1f);
                 Vector3 randomScale = new Vector3(randomX, randomY, randomZ);
                 position = center + Vector3.Scale(extents, randomScale);
                 break;
-            case RangeType.Sphere:
+            case SpawRangeType.Sphere:
                 randomX = Random.Range(-1f, 1f);
                 position = Vector3.Scale(extents, Vector3.right * randomX);
                 position = Random.rotation * position;
                 position += center;
                 break;
-            case RangeType.Cylinder:
+            case SpawRangeType.Cylinder:
                 randomX = Random.Range(-1f, 1f);
                 randomY = Random.Range(-1f, 1f);
                 randomZ = Random.Range(0f, 360f);

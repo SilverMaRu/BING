@@ -11,6 +11,32 @@ public class ItemBaseInfo : ScriptableObject
     public EffectGroup effectGroup;
     // 范围半径
     public float radius;
+
+    public virtual ItemBaseInfo Clone()
+    {
+        //Debug.Log("Do ItemBaseInfo.Clone");
+        ItemBaseInfo cloneInfo = (ItemBaseInfo)CreateInstance(GetType());
+        cloneInfo.itemName = itemName;
+        cloneInfo.itemID = itemID;
+        cloneInfo.maxCountInGrid = maxCountInGrid;
+        cloneInfo.effectGroup = effectGroup;
+        cloneInfo.radius = radius;
+        return cloneInfo;
+    }
+
+    public virtual void Use(AttributesManager effectAttrManager)
+    {
+    }
+
+    public override string ToString()
+    {
+        return string.Format("itemName:{0},itemID:{1},maxCountInGrid:{2},effectGroup:{3},radius:{4}"
+            , itemName
+            , itemID
+            , maxCountInGrid
+            , effectGroup
+            , radius);
+    }
 }
 // 作用群体
 public enum EffectGroup
@@ -19,7 +45,7 @@ public enum EffectGroup
     MySelf,
     // 一位随机队友(包括自己)
     RandomTeammate,
-    // 最近的一名队友(不包括自己)
+    // 最近的一名队友(如果阵营中有队友则不包括自己, 若阵营中只有自己则等同与MySelf)
     OneNearbyTeammate,
     // 范围内随机一名队友(包括自己)
     RangeRandomTeammate,

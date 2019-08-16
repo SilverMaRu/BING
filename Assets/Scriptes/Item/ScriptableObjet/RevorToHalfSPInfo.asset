@@ -10,15 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8c83a8202de56054eaa1664d04c9025c, type: 3}
-  m_Name: AddMaxSPInfo
+  m_Name: RevorToHalfSPInfo
   m_EditorClassIdentifier: 
-  itemName: AddMaxSP
-  itemID: 1001
+  itemName: RevorToHalfSP
+  itemID: 1003
   maxCountInGrid: 1
   effectGroup: 0
   radius: 0
-  reviseAttr: 0
-  reviseValue: 10
-  reviseMode: 0
+  reviseAttr: 1
+  reviseValue: 0.5
+  reviseMode: 1
   computeMode: 0
   duration: 0
