@@ -18,11 +18,6 @@ public class PickUp : MonoBehaviour, IPoolWater
         ChangeToRigidbodyCollision();
     }
 
-    //private void OnEnable()
-    //{
-    //    ChangeToRigidbodyCollision();
-    //}
-
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.layer == 9)
@@ -38,7 +33,6 @@ public class PickUp : MonoBehaviour, IPoolWater
             BackpackManager backpackManager = other.GetComponent<BackpackManager>();
             if (backpackManager != null && backpackManager.canPickUp)
             {
-                //gameObject.SetActive(false);
                 Rest();
                 GoBack();
             }

@@ -7,17 +7,26 @@ public class ActivityReachOut : ActivityBase
     private AttributesManager attrManager;
     private Transform reachOutIKTran;
     private long reviseReceipt;
-    
+
     private ActivityReachOutInfo reachOutInfo;
-    private float reachOutUsedTime = 0;
-    private float countermandUsedTime = 0;
+    private float _weight = 0;
+    private float weight
+    {
+        get
+        {
+            return _weight;
+        }
+        set
+        {
+            _weight = Mathf.Clamp(value, 0, 1);
+        }
+    }
 
     public ActivityReachOut(GameObject ownerGO) : base(ownerGO)
     {
         attrManager = ownerGO.GetComponent<AttributesManager>();
         reachOutInfo = activityInfo as ActivityReachOutInfo;
         reachOutIKTran = ownerGO.transform.Find(reachOutInfo.IKGameObjectName);
-        if (reachOutIKTran == null) Debug.LogWarning("Not Found " + reachOutInfo.IKGameObjectName + " On OnwerGO");
     }
 
     public ActivityReachOut(GameObject ownerGO, ActivityBaseInfo activityInfo) : base(ownerGO, activityInfo)
@@ -25,7 +34,6 @@ public class ActivityReachOut : ActivityBase
         attrManager = ownerGO.GetComponent<AttributesManager>();
         reachOutInfo = activityInfo as ActivityReachOutInfo;
         reachOutIKTran = ownerGO.transform.Find(reachOutInfo.IKGameObjectName);
-        if (reachOutIKTran == null) Debug.LogWarning("Not Found " + reachOutInfo.IKGameObjectName + " On OnwerGO");
     }
 
     public override bool MeetEnterCondition()
@@ -37,9 +45,8 @@ public class ActivityReachOut : ActivityBase
     {
         base.EnterActivity();
         AddRevise();
-        reachOutUsedTime = 0;
-        activityManager.OnAnimatorIKAction -= Countermand;
         activityManager.OnAnimatorIKAction += ReachOut;
+        activityManager.OnAnimatorIKAction -= Countermand;
     }
 
     public override bool MeetExitCondition()
@@ -50,31 +57,33 @@ public class ActivityReachOut : ActivityBase
     public override void ExitActivity()
     {
         base.ExitActivity();
-        countermandUsedTime = 0;
-        activityManager.OnAnimatorIKAction -= ReachOut;
         activityManager.OnAnimatorIKAction += Countermand;
+        activityManager.OnAnimatorIKAction -= ReachOut;
     }
 
     private void AddRevise()
     {
-        reviseReceipt = attrManager.AddRevise(reachOutInfo.reviseInfo);
+        reviseReceipt = attrManager.AddActivityRevise(reachOutInfo.reviseInfo);
     }
 
     private void ReachOut(int layerIndex)
     {
-        animator.SetIKPosition(reachOutInfo.effectGoal, reachOutIKTran.position);
-        animator.SetIKRotation(reachOutInfo.effectGoal, reachOutIKTran.rotation);
-        float weight = reachOutUsedTime / reachOutInfo.reachOutUseTime;
-        animator.SetIKPositionWeight(reachOutInfo.effectGoal, weight);
-        animator.SetIKRotationWeight(reachOutInfo.effectGoal, weight);
-        reachOutUsedTime += Time.deltaTime;
+        weight += Time.deltaTime / reachOutInfo.reachOutUseTime;
+        SetIK(layerIndex, weight);
     }
 
     private void Countermand(int layerIndex)
     {
-        float weight = countermandUsedTime / reachOutInfo.reachOutUseTime;
+        weight -= Time.deltaTime / reachOutInfo.countermandUseTime;
+        SetIK(layerIndex, weight);
+        if(weight <= 0) activityManager.OnAnimatorIKAction -= Countermand;
+    }
+
+    private void SetIK(int layerIndex, float weight)
+    {
+        animator.SetIKPosition(reachOutInfo.effectGoal, reachOutIKTran.position);
+        animator.SetIKRotation(reachOutInfo.effectGoal, reachOutIKTran.rotation);
         animator.SetIKPositionWeight(reachOutInfo.effectGoal, weight);
         animator.SetIKRotationWeight(reachOutInfo.effectGoal, weight);
-        countermandUsedTime += Time.deltaTime;
     }
 }

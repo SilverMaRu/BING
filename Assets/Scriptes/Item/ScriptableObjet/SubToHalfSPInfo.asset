@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8c83a8202de56054eaa1664d04c9025c, type: 3}
-  m_Name: RevorToMaxSPInfo
+  m_Name: SubToHalfSPInfo
   m_EditorClassIdentifier: 
-  itemName: RevorToMaxSP
-  itemID: 1004
+  itemName: SubToHalfSP
+  itemID: 1005
   maxCountInGrid: 1
   effectGroup: 0
   radius: 0
-  reviseInfo: {fileID: 11400000, guid: 1d6546d12ceb2a74f987664b5442b307, type: 2}
+  reviseInfo: {fileID: 11400000, guid: 9106a7552a947384580576842ffe10bb, type: 2}
   reviseAttr: 1
-  reviseValue: 1
+  reviseValue: -0.5
   reviseMode: 1
   computeMode: 1
   duration: 0

@@ -5,8 +5,6 @@ using UnityEngine;
 [CreateAssetMenu(fileName ="ActivityNameInfo", menuName ="ScriptableObject/ActivityMoveInfo")]
 public class ActivityMoveInfo : ActivityBaseInfo
 {
-    //public float reviseRecoverSPValue;
-    //public ReviseType reviseMode;
     public ReviseInfo reviseInfo;
     public float enterPunishValue;
     [Range(0,1)]

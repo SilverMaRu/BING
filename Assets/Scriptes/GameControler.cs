@@ -10,6 +10,11 @@ public class GameControler : MonoBehaviour
     public event SwitchFactionDelegate SwitchFactionCompleteEvent;
 
     public float switchFactionUseTime = 5;
+    public ReviseInfo[] changeToGhostRevises;
+    public ReviseInfo[] changeToPeopleRevises;
+
+    public GameObject originalGhostGO;
+    public GameObject originalPeopleGO;
 
     private void Awake()
     {
@@ -21,21 +26,40 @@ public class GameControler : MonoBehaviour
     {
     }
 
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.C) && originalGhostGO != null && originalPeopleGO != null)
+        {
+            SwitchFaction(originalGhostGO, originalPeopleGO);
+            GameObject tempGO = originalGhostGO;
+            originalGhostGO = originalPeopleGO;
+            originalPeopleGO = tempGO;
+        }
+    }
+
     public void SwitchFaction(GameObject originalGhostGO, GameObject originalPeopleGO)
     {
         SwitchFactionStartEvent?.Invoke();
         StartCoroutine(IEnumeratorHelper.After(() => { SwitchFactionCompleteEvent?.Invoke(); }, switchFactionUseTime));
         AttributesManager originalGhostAttrManager = originalGhostGO.GetComponent<AttributesManager>();
         originalGhostAttrManager.faction = PlayerFaction.People;
-        originalGhostAttrManager.RemoveAllRevise();
-        originalGhostAttrManager.ReviseCurrentSP(0, ReviseType.Normal, ComputeMode.Set);
+        originalGhostAttrManager.RemoveAllItemRevise();
+        foreach (ReviseInfo tempReviseInfo in changeToPeopleRevises)
+        {
+            long reviseReceipt = originalGhostAttrManager.AddItemRevise(tempReviseInfo);
+        }
 
         AttributesManager originalPeopleAttrManager = originalPeopleGO.GetComponent<AttributesManager>();
         originalPeopleAttrManager.faction = PlayerFaction.Ghost;
-        originalPeopleAttrManager.RemoveAllRevise();
-        long reviseReceipt = originalPeopleAttrManager.AddReviseTimeScale(-1, ReviseType.PercentBase);
-        StartCoroutine(IEnumeratorHelper.After(originalPeopleAttrManager.RemoveReviseTimeScale, reviseReceipt, switchFactionUseTime));
+        originalPeopleAttrManager.RemoveAllItemRevise();
+        foreach(ReviseInfo tempReviseInfo in changeToGhostRevises)
+        {
+            long reviseReceipt = originalPeopleAttrManager.AddItemRevise(tempReviseInfo);
+        }
+        ActivityManager originalPeopleActivityManager = originalPeopleGO.GetComponent<ActivityManager>();
+        originalPeopleActivityManager.enabled = false;
+        StartCoroutine(IEnumeratorHelper.After(() => { originalPeopleActivityManager.enabled = true; }, switchFactionUseTime));
     }
 
-    
+
 }

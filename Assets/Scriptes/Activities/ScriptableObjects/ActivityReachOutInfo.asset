@@ -15,11 +15,7 @@ MonoBehaviour:
   activityTypeName: ActivityReachOut
   animatorParamName: 
   animatorParamType: 0
-  reviseInfo:
-    reviseField: 1
-    reviseValue: -5
-    reviseMode: 0
-    computeMode: 0
+  reviseInfo: {fileID: 11400000, guid: 062d4fbba744bb645844adc518c96d07, type: 2}
   IKGameObjectName: ReachOutIK
   effectGoal: 3
   reachOutUseTime: 2

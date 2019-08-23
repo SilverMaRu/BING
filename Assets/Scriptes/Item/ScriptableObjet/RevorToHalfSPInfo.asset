@@ -17,8 +17,9 @@ MonoBehaviour:
   maxCountInGrid: 1
   effectGroup: 0
   radius: 0
+  reviseInfo: {fileID: 11400000, guid: 95e208c1d97424e4aa1423decbbc5d5a, type: 2}
   reviseAttr: 1
   reviseValue: 0.5
   reviseMode: 1
-  computeMode: 0
+  computeMode: 1
   duration: 0

@@ -15,11 +15,7 @@ MonoBehaviour:
   activityTypeName: ActivityWalk
   animatorParamName: Forward
   animatorParamType: 1
-  reviseInfo:
-    reviseField: 2
-    reviseValue: -3
-    reviseMode: 0
-    computeMode: 0
+  reviseInfo: {fileID: 11400000, guid: 5b0386834c041464c92302aa291bf731, type: 2}
   enterPunishValue: 0
   enterPunishPercent: 0
   exitPunishValue: 0

@@ -12,7 +12,11 @@ public class AttributesManager : MonoBehaviour
     public event MaxAttributesChangeDelegate MaxSPChangeEvent;
     public event CurrentAttributesChangeDelegate CurrentSPChangeEvent;
     public event PlayerFactionChangeDelegate PlayerFactionChangeEvent;
+    public event System.Action<float> TimeScaleChangeEvent;
 
+    #region UseTest
+    public PlayerFaction initFaction = PlayerFaction.People;
+    #endregion UseTest
     public Attributes peopleAttributes;
     public Attributes ghostAttributes;
     private PlayerFaction _faction = PlayerFaction.People;
@@ -28,7 +32,8 @@ public class AttributesManager : MonoBehaviour
             PlayerFactionChangeEvent?.Invoke(_faction);
         }
     }
-    private Dictionary<long, float> receiptReviseMaxSPPairs = new Dictionary<long, float>();
+    private Dictionary<long, float> receiptActivityReviseMaxSPPairs = new Dictionary<long, float>();
+    private Dictionary<long, float> receiptItemReviseMaxSPPairs = new Dictionary<long, float>();
     public float baseMaxSP
     {
         get
@@ -50,14 +55,24 @@ public class AttributesManager : MonoBehaviour
     {
         get
         {
-            float finalMaxSP = baseMaxSP;
-            float[] reviseMaxSPArray = new float[receiptReviseMaxSPPairs.Count];
-            receiptReviseMaxSPPairs.Values.CopyTo(reviseMaxSPArray, 0);
-            foreach (float tempRevise in reviseMaxSPArray)
+            float finalValue = baseMaxSP;
+            #region 合计道具修正
+            float[] itemReviseArray = new float[receiptItemReviseMaxSPPairs.Count];
+            receiptItemReviseMaxSPPairs.Values.CopyTo(itemReviseArray, 0);
+            foreach (float tempRevise in itemReviseArray)
             {
-                finalMaxSP += tempRevise;
+                finalValue += tempRevise;
             }
-            return Mathf.Max(0, finalMaxSP);
+            #endregion 合计道具修正
+            #region 合计行为修正
+            float[] activityReviseArray = new float[receiptActivityReviseMaxSPPairs.Count];
+            receiptActivityReviseMaxSPPairs.Values.CopyTo(activityReviseArray, 0);
+            foreach (float tempRevise in activityReviseArray)
+            {
+                finalValue += tempRevise;
+            }
+            #endregion 合计行为修正
+            return Mathf.Max(0, finalValue);
         }
     }
     private float _currentSP;
@@ -70,7 +85,8 @@ public class AttributesManager : MonoBehaviour
             CurrentSPChangeEvent?.Invoke(_currentSP, maxSP);
         }
     }
-    private Dictionary<long, float> receiptReviseRecoverSPPairs = new Dictionary<long, float>();
+    private Dictionary<long, float> receiptActivityReviseRecoverSPPairs = new Dictionary<long, float>();
+    private Dictionary<long, float> receiptItemReviseRecoverSPPairs = new Dictionary<long, float>();
     public float baseRecoverSP
     {
         get
@@ -92,17 +108,28 @@ public class AttributesManager : MonoBehaviour
     {
         get
         {
-            float finalRecoverSP = baseRecoverSP;
-            float[] reviseRecoverSPArray = new float[receiptReviseRecoverSPPairs.Count];
-            receiptReviseRecoverSPPairs.Values.CopyTo(reviseRecoverSPArray, 0);
-            foreach (float tempRevise in reviseRecoverSPArray)
+            float finalValue = baseRecoverSP;
+            #region 合计道具修正
+            float[] itemReviseArray = new float[receiptItemReviseRecoverSPPairs.Count];
+            receiptItemReviseRecoverSPPairs.Values.CopyTo(itemReviseArray, 0);
+            foreach (float tempRevise in itemReviseArray)
             {
-                finalRecoverSP += tempRevise;
+                finalValue += tempRevise;
             }
-            return finalRecoverSP;
+            #endregion 合计道具修正
+            #region 合计行为修正
+            float[] activityReviseArray = new float[receiptActivityReviseRecoverSPPairs.Count];
+            receiptActivityReviseRecoverSPPairs.Values.CopyTo(activityReviseArray, 0);
+            foreach (float tempRevise in activityReviseArray)
+            {
+                finalValue += tempRevise;
+            }
+            #endregion 合计行为修正
+            return finalValue;
         }
     }
-    private Dictionary<long, float> receiptReviseTimeScalePairs = new Dictionary<long, float>();
+    private Dictionary<long, float> receiptActivityReviseTimeScalePairs = new Dictionary<long, float>();
+    private Dictionary<long, float> receiptItemReviseTimeScalePairs = new Dictionary<long, float>();
     public float baseTimeScale
     {
         get
@@ -124,22 +151,40 @@ public class AttributesManager : MonoBehaviour
     {
         get
         {
-            float finalTimeScale = baseTimeScale;
-            float[] reviseTimeScaleArray = new float[receiptReviseTimeScalePairs.Count];
-            receiptReviseTimeScalePairs.Values.CopyTo(reviseTimeScaleArray, 0);
-            foreach (float tempRevise in reviseTimeScaleArray)
+            float finalValue = baseTimeScale;
+            #region 合计道具修正
+            float[] itemReviseArray = new float[receiptItemReviseTimeScalePairs.Count];
+            receiptItemReviseTimeScalePairs.Values.CopyTo(itemReviseArray, 0);
+            foreach (float tempRevise in itemReviseArray)
             {
-                finalTimeScale += tempRevise;
+                finalValue += tempRevise;
             }
-            return Mathf.Max(0, finalTimeScale);
+            #endregion 合计道具修正
+            #region 合计行为修正
+            float[] activityReviseArray = new float[receiptActivityReviseTimeScalePairs.Count];
+            receiptActivityReviseTimeScalePairs.Values.CopyTo(activityReviseArray, 0);
+            foreach (float tempRevise in activityReviseArray)
+            {
+                finalValue += tempRevise;
+            }
+            #endregion 合计行为修正
+            return Mathf.Max(0, finalValue);
         }
+    }
+
+    private Animator anim;
+
+    private void Awake()
+    {
+        faction = initFaction;
     }
 
     // Start is called before the first frame update
     void Start()
     {
-        //peopleAttributes = ghostAttributes.Clone();
         currentSP = maxSP;
+        anim = GetComponent<Animator>();
+        SetAnimatorSpeed(timeScale);
     }
 
     // Update is called once per frame
@@ -148,57 +193,107 @@ public class AttributesManager : MonoBehaviour
         currentSP += recoverSP * Time.deltaTime * timeScale;
     }
 
-    public long AddRevise(ReviseField reviseField, float reviseValue, ReviseType reviseMode, ComputeMode computeMode)
+    public long AddActivityRevise(ReviseField reviseField, float reviseValue, ReviseType reviseMode, ComputeMode computeMode, float duration)
     {
         long receipt = -1;
         switch (reviseField)
         {
             case ReviseField.MaxSP:
-                receipt = AddReviseMaxSP(reviseValue, reviseMode);
+                receipt = AddActivityReviseMaxSP(reviseValue, reviseMode, duration);
                 break;
             case ReviseField.CurrentSP:
                 ReviseCurrentSP(reviseValue, reviseMode, computeMode);
                 break;
             case ReviseField.RecoverSP:
-                receipt = AddReviseRecoverSP(reviseValue, reviseMode);
+                receipt = AddActivityReviseRecoverSP(reviseValue, reviseMode, duration);
                 break;
             case ReviseField.TimeScale:
-                receipt = AddReviseTimeScale(reviseValue, reviseMode);
+                receipt = AddActivityReviseTimeScale(reviseValue, reviseMode, duration);
                 break;
         }
 
         return receipt;
     }
 
-    public long AddRevise(ReviseInfo info)
+    public long AddActivityRevise(ReviseInfo info)
     {
-        return AddRevise(info.reviseField, info.reviseValue, info.reviseMode, info.computeMode);
+        return AddActivityRevise(info.reviseField, info.reviseValue, info.reviseMode, info.computeMode, info.duration);
     }
 
-    public void RemoveRevise(ReviseField reviseField, long receipt)
+    public long AddItemRevise(ReviseField reviseField, float reviseValue, ReviseType reviseMode, ComputeMode computeMode, float duration)
+    {
+        long receipt = -1;
+        switch (reviseField)
+        {
+            case ReviseField.MaxSP:
+                receipt = AddItemReviseMaxSP(reviseValue, reviseMode, duration);
+                break;
+            case ReviseField.CurrentSP:
+                ReviseCurrentSP(reviseValue, reviseMode, computeMode);
+                break;
+            case ReviseField.RecoverSP:
+                receipt = AddItemReviseRecoverSP(reviseValue, reviseMode, duration);
+                break;
+            case ReviseField.TimeScale:
+                receipt = AddItemReviseTimeScale(reviseValue, reviseMode, duration);
+                break;
+        }
+
+        return receipt;
+    }
+
+    public long AddItemRevise(ReviseInfo info)
+    {
+        return AddItemRevise(info.reviseField, info.reviseValue, info.reviseMode, info.computeMode, info.duration);
+    }
+
+    public void RemoveActivityRevise(ReviseField reviseField, long receipt)
     {
         switch (reviseField)
         {
             case ReviseField.MaxSP:
-                RemoveReviseMaxSP(receipt);
+                RemoveActivityReviseMaxSP(receipt);
                 break;
             case ReviseField.RecoverSP:
-                RemoveReviseRecoverSP(receipt);
+                RemoveActivityReviseRecoverSP(receipt);
                 break;
             case ReviseField.TimeScale:
-                RemoveReviseTimeScale(receipt);
+                RemoveActivityReviseTimeScale(receipt);
                 break;
         }
     }
 
-    public void RemoveAllRevise()
+    public void RemoveAllActivityRevise()
     {
-        receiptReviseMaxSPPairs.Clear();
-        receiptReviseRecoverSPPairs.Clear();
-        receiptReviseTimeScalePairs.Clear();
+        receiptActivityReviseMaxSPPairs.Clear();
+        receiptActivityReviseRecoverSPPairs.Clear();
+        receiptActivityReviseTimeScalePairs.Clear();
     }
 
-    public long AddReviseMaxSP(float reviseValue, ReviseType reviseMode)
+    public void RemoveItemRevise(ReviseField reviseField, long receipt)
+    {
+        switch (reviseField)
+        {
+            case ReviseField.MaxSP:
+                RemoveItemReviseMaxSP(receipt);
+                break;
+            case ReviseField.RecoverSP:
+                RemoveItemReviseRecoverSP(receipt);
+                break;
+            case ReviseField.TimeScale:
+                RemoveItemReviseTimeScale(receipt);
+                break;
+        }
+    }
+
+    public void RemoveAllItemRevise()
+    {
+        receiptItemReviseMaxSPPairs.Clear();
+        receiptItemReviseRecoverSPPairs.Clear();
+        receiptItemReviseTimeScalePairs.Clear();
+    }
+
+    private long AddActivityReviseMaxSP(float reviseValue, ReviseType reviseMode, float duration)
     {
         long receipt = System.DateTime.Now.ToBinary();
         float revise = reviseValue;
@@ -211,21 +306,50 @@ public class AttributesManager : MonoBehaviour
                 revise = maxSP * reviseValue;
                 break;
         }
-        receiptReviseMaxSPPairs.Add(receipt, revise);
+        receiptActivityReviseMaxSPPairs.Add(receipt, revise);
         MaxSPChangeEvent?.Invoke(maxSP);
+        if (duration > 0) StartCoroutine(IEnumeratorHelper.After(RemoveActivityReviseMaxSP, receipt, duration));
         return receipt;
     }
 
-    public void RemoveReviseMaxSP(long receipt)
+    private long AddItemReviseMaxSP(float reviseValue, ReviseType reviseMode, float duration)
     {
-        if (receiptReviseMaxSPPairs.ContainsKey(receipt))
+        long receipt = System.DateTime.Now.ToBinary();
+        float revise = reviseValue;
+        switch (reviseMode)
         {
-            receiptReviseMaxSPPairs.Remove(receipt);
+            case ReviseType.PercentBase:
+                revise = baseMaxSP * reviseValue;
+                break;
+            case ReviseType.PercentCurrent:
+                revise = maxSP * reviseValue;
+                break;
+        }
+        receiptItemReviseMaxSPPairs.Add(receipt, revise);
+        MaxSPChangeEvent?.Invoke(maxSP);
+        if (duration > 0) StartCoroutine(IEnumeratorHelper.After(RemoveItemReviseMaxSP, receipt, duration));
+        return receipt;
+    }
+
+    private void RemoveActivityReviseMaxSP(long receipt)
+    {
+        if (receiptActivityReviseMaxSPPairs.ContainsKey(receipt))
+        {
+            receiptActivityReviseMaxSPPairs.Remove(receipt);
             MaxSPChangeEvent?.Invoke(maxSP);
         }
     }
 
-    public void ReviseCurrentSP(float reviseValue, ReviseType reviseMode, ComputeMode computeMode)
+    private void RemoveItemReviseMaxSP(long receipt)
+    {
+        if (receiptItemReviseMaxSPPairs.ContainsKey(receipt))
+        {
+            receiptItemReviseMaxSPPairs.Remove(receipt);
+            MaxSPChangeEvent?.Invoke(maxSP);
+        }
+    }
+
+    private void ReviseCurrentSP(float reviseValue, ReviseType reviseMode, ComputeMode computeMode)
     {
         float revise = reviseValue;
         switch (reviseMode)
@@ -258,7 +382,7 @@ public class AttributesManager : MonoBehaviour
         }
     }
 
-    public long AddReviseRecoverSP(float reviseValue, ReviseType reviseMode)
+    private long AddActivityReviseRecoverSP(float reviseValue, ReviseType reviseMode, float duration)
     {
         long receipt = System.DateTime.Now.ToBinary();
         float revise = reviseValue;
@@ -271,16 +395,40 @@ public class AttributesManager : MonoBehaviour
                 revise = recoverSP * reviseValue;
                 break;
         }
-        receiptReviseRecoverSPPairs.Add(receipt, revise);
+        receiptActivityReviseRecoverSPPairs.Add(receipt, revise);
+        if (duration > 0) StartCoroutine(IEnumeratorHelper.After(RemoveActivityReviseRecoverSP, receipt, duration));
         return receipt;
     }
 
-    public void RemoveReviseRecoverSP(long receipt)
+    private long AddItemReviseRecoverSP(float reviseValue, ReviseType reviseMode, float duration)
     {
-        if (receiptReviseRecoverSPPairs.ContainsKey(receipt)) receiptReviseRecoverSPPairs.Remove(receipt);
+        long receipt = System.DateTime.Now.ToBinary();
+        float revise = reviseValue;
+        switch (reviseMode)
+        {
+            case ReviseType.PercentBase:
+                revise = baseRecoverSP * reviseValue;
+                break;
+            case ReviseType.PercentCurrent:
+                revise = recoverSP * reviseValue;
+                break;
+        }
+        receiptItemReviseRecoverSPPairs.Add(receipt, revise);
+        if (duration > 0) StartCoroutine(IEnumeratorHelper.After(RemoveItemReviseRecoverSP, receipt, duration));
+        return receipt;
     }
 
-    public long AddReviseTimeScale(float reviseValue, ReviseType reviseMode)
+    private void RemoveActivityReviseRecoverSP(long receipt)
+    {
+        if (receiptActivityReviseRecoverSPPairs.ContainsKey(receipt)) receiptActivityReviseRecoverSPPairs.Remove(receipt);
+    }
+
+    private void RemoveItemReviseRecoverSP(long receipt)
+    {
+        if (receiptItemReviseRecoverSPPairs.ContainsKey(receipt)) receiptItemReviseRecoverSPPairs.Remove(receipt);
+    }
+
+    private long AddActivityReviseTimeScale(float reviseValue, ReviseType reviseMode, float duration)
     {
         long receipt = System.DateTime.Now.ToBinary();
         float revise = reviseValue;
@@ -293,13 +441,56 @@ public class AttributesManager : MonoBehaviour
                 revise = timeScale * reviseValue;
                 break;
         }
-        receiptReviseTimeScalePairs.Add(receipt, revise);
+        receiptActivityReviseTimeScalePairs.Add(receipt, revise);
+        SetAnimatorSpeed(timeScale);
+        TimeScaleChangeEvent?.Invoke(timeScale);
+        if (duration > 0) StartCoroutine(IEnumeratorHelper.After(RemoveActivityReviseTimeScale, receipt, duration));
         return receipt;
     }
 
-    public void RemoveReviseTimeScale(long receipt)
+    private long AddItemReviseTimeScale(float reviseValue, ReviseType reviseMode, float duration)
     {
-        if (receiptReviseTimeScalePairs.ContainsKey(receipt)) receiptReviseTimeScalePairs.Remove(receipt);
+        long receipt = System.DateTime.Now.ToBinary();
+        float revise = reviseValue;
+        switch (reviseMode)
+        {
+            case ReviseType.PercentBase:
+                revise = baseTimeScale * reviseValue;
+                break;
+            case ReviseType.PercentCurrent:
+                revise = timeScale * reviseValue;
+                break;
+        }
+        receiptItemReviseTimeScalePairs.Add(receipt, revise);
+        SetAnimatorSpeed(timeScale);
+        TimeScaleChangeEvent?.Invoke(timeScale);
+        if (duration > 0) StartCoroutine(IEnumeratorHelper.After(RemoveItemReviseTimeScale, receipt, duration));
+        return receipt;
+    }
+
+    private void RemoveActivityReviseTimeScale(long receipt)
+    {
+        if (receiptActivityReviseTimeScalePairs.ContainsKey(receipt))
+        {
+            receiptActivityReviseTimeScalePairs.Remove(receipt);
+            SetAnimatorSpeed(timeScale);
+            TimeScaleChangeEvent?.Invoke(timeScale);
+        }
+    }
+
+    private void RemoveItemReviseTimeScale(long receipt)
+    {
+        if (receiptItemReviseTimeScalePairs.ContainsKey(receipt))
+        {
+            receiptItemReviseTimeScalePairs.Remove(receipt);
+            SetAnimatorSpeed(timeScale);
+            TimeScaleChangeEvent?.Invoke(timeScale);
+        }
+    }
+
+    private void SetAnimatorSpeed(float currentValue)
+    {
+        anim.speed = currentValue;
     }
 
     public static AttributesManager[] GetFactionAllAttrManager(PlayerFaction faction)
@@ -368,14 +559,16 @@ public class AttributesManager : MonoBehaviour
     }
 }
 
-[System.Serializable]
-public class ReviseInfo
-{
-    public ReviseField reviseField = ReviseField.CurrentSP;
-    public float reviseValue = 0;
-    public ReviseType reviseMode = ReviseType.Normal;
-    public ComputeMode computeMode = ComputeMode.Add;
-}
+//[System.Serializable]
+//public class ReviseInfo
+//{
+//    public ReviseField reviseField = ReviseField.CurrentSP;
+//    public float reviseValue = 0;
+//    public ReviseType reviseMode = ReviseType.Normal;
+//    public ComputeMode computeMode = ComputeMode.Add;
+//    // 道具持续时间 (小于等于0时, 视为永久效果道具)
+//    public float duration;
+//}
 
 public enum ReviseType
 {

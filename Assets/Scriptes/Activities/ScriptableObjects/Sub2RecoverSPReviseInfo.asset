@@ -9,17 +9,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8c83a8202de56054eaa1664d04c9025c, type: 3}
-  m_Name: RevorHalfSPInfo
+  m_Script: {fileID: 11500000, guid: 473440ce15f749b4097d9a4c23ff1924, type: 3}
+  m_Name: Sub2RecoverSPReviseInfo
   m_EditorClassIdentifier: 
-  itemName: RevorHalfSP
-  itemID: 1002
-  maxCountInGrid: 1
-  effectGroup: 0
-  radius: 0
-  reviseInfo: {fileID: 11400000, guid: 79c696d840db34941b470d65922ffcc4, type: 2}
-  reviseAttr: 1
-  reviseValue: 0.5
-  reviseMode: 1
+  reviseField: 2
+  reviseValue: -2
+  reviseMode: 0
   computeMode: 0
   duration: 0

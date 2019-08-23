@@ -13,11 +13,12 @@ public class Part : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (isEnable && other.tag.Equals("Player"))
+        if (isEnable && other.tag.Equals("PlayerPart"))
         {
             Part otherPart = other.GetComponent<Part>();
             if(otherPart != null && TouchEvent != null && otherPart.isEnable)
             {
+                Debug.Log(partManager.gameObject.name + " & " + other.name + " Touch");
                 TouchEvent(this, new TouchEventDate(otherPart));
             }
         }

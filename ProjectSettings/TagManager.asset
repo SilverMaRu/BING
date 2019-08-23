@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Item
   - PickUp
+  - PlayerPart
   layers:
   - Default
   - TransparentFX

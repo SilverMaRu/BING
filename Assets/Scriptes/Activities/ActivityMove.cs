@@ -88,14 +88,13 @@ public class ActivityMove : ActivityBase
     private void AddRevise()
     {
         ActivityMoveInfo info = activityInfo as ActivityMoveInfo;
-        //reviseReceipt = attrManager.AddReviseRecoverSP(info.reviseRecoverSPValue, info.reviseMode);
-        reviseReceipt = attrManager.AddRevise(info.reviseInfo);
-        //reviseReceipt = attrManager.AddRevise(info.)
+        reviseReceipt = attrManager.AddActivityRevise(info.reviseInfo);
     }
 
     private void RemoveRevise()
     {
-        attrManager.RemoveReviseRecoverSP(reviseReceipt);
+        ActivityMoveInfo info = activityInfo as ActivityMoveInfo;
+        attrManager.RemoveActivityRevise(info.reviseInfo.reviseField, reviseReceipt);
     }
 
     private void TryEndPunish()

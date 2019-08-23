@@ -5,6 +5,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "ItemNameInfo", menuName = "ScriptableObject/AttributesItemInfo")]
 public class AttributesItemInfo : ItemBaseInfo
 {
+    public ReviseInfo reviseInfo;
     public ReviseField reviseAttr;
     public float reviseValue;
     public ReviseType reviseMode;
@@ -14,7 +15,6 @@ public class AttributesItemInfo : ItemBaseInfo
 
     public override ItemBaseInfo Clone()
     {
-        //Debug.Log("Do AttributesItemInfo.Clone");
         AttributesItemInfo cloneInfo = (AttributesItemInfo)base.Clone();
         cloneInfo.reviseAttr = reviseAttr;
         cloneInfo.reviseValue = reviseValue;
@@ -26,8 +26,7 @@ public class AttributesItemInfo : ItemBaseInfo
     public override void Use(AttributesManager effectAttrManager)
     {
         base.Use(effectAttrManager);
-        long receipt = effectAttrManager.AddRevise(reviseAttr, reviseValue, reviseMode, computeMode);
-        if (duration > 0) effectAttrManager.StartCoroutine(IEnumeratorHelper.After(effectAttrManager.RemoveRevise, reviseAttr, receipt, duration));
+        long receipt = effectAttrManager.AddItemRevise(reviseAttr, reviseValue, reviseMode, computeMode, duration);
     }
 
     public override string ToString()
