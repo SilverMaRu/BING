@@ -9,7 +9,7 @@ public class Backpack
     private PlayerFaction ownerFaction { get { return attrManager.faction; } }
     private BackpackGrid[] grids;
     private int backpackSize = 1;
-    private int lastCheckIndex = 0;
+    //private int lastCheckIndex = 0;
 
     public Backpack(GameObject ownerGO) : this(ownerGO, 1)
     {

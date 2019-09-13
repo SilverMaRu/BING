@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public delegate void ActivityBaseDelegate(ActivityBase sender, ActivityEventDate eventDate);
+public delegate void ActivityBaseDelegate(ActivityBase sender, ActivityEventData eventData);
 
 public class ActivityBase
 {
@@ -47,7 +47,7 @@ public class ActivityBase
         #region 发送事件
         if (EnterActivityEvent != null)
         {
-            ActivityEventDate eventDate = new ActivityEventDate(ownerGO);
+            ActivityEventData eventDate = new ActivityEventData(ownerGO);
             EnterActivityEvent(this, eventDate);
         }
         #endregion 发送事件
@@ -76,7 +76,7 @@ public class ActivityBase
         #region 发送事件
         if (EnterActivityEvent != null)
         {
-            ActivityEventDate eventDate = new ActivityEventDate(ownerGO);
+            ActivityEventData eventDate = new ActivityEventData(ownerGO);
             ExitActivityEvent(this, eventDate);
         }
         #endregion 发送事件
@@ -123,11 +123,11 @@ public class ActivityBase
 
 public enum ParamType { Int, Float, Bool, Trigger }
 
-public class ActivityEventDate
+public class ActivityEventData
 {
     public GameObject ownerGO;
 
-    public ActivityEventDate(GameObject ownerGO)
+    public ActivityEventData(GameObject ownerGO)
     {
         this.ownerGO = ownerGO;
     }

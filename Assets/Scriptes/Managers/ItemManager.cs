@@ -5,7 +5,16 @@ using UnityEngine;
 public class ItemManager : MonoBehaviour
 {
     public ObjectPool pickUpItemPool;
-    public int testSpawNum = 100;
+    // 道具生成频率(秒)
+    public float spawFrequency = 30;
+    // 已过时间
+    private float pastedTime = 0;
+    public int spawNum = 100;
+    // 大小随机范围
+    [Range(0.1f, 1.5f)]
+    public float spawMinScale = 1;
+    [Range(0.1f, 1.5f)]
+    public float spawMaxScale = 1;
     public ItemInfoList itemInfoBase;
     private ItemBaseInfo[] itemInfos;
 
@@ -32,18 +41,33 @@ public class ItemManager : MonoBehaviour
         {
             tempPlayerGO.GetComponent<BackpackManager>().PickUpEvent += OnPickUp;
         }
+        if (spawMaxScale < spawMinScale) spawMaxScale = spawMinScale = 1;
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.R))
+        #region 道具生成测试
+        //if (Input.GetKeyDown(KeyCode.R))
+        //{
+        //    for (int i = 0; i < testSpawNum; i++)
+        //    {
+        //        scenePickUpList.Add(CreateItem());
+        //    }
+        //}
+        #endregion 道具生成测试
+        if (pastedTime > spawFrequency)
         {
-            for (int i = 0; i < testSpawNum; i++)
+            ClearItems();
+            for (int i = 0; i < spawNum; i++)
             {
                 scenePickUpList.Add(CreateItem());
-
             }
+            pastedTime = 0;
+        }
+        else
+        {
+            pastedTime += Time.deltaTime;
         }
     }
 
@@ -56,12 +80,24 @@ public class ItemManager : MonoBehaviour
     public GameObject CreateItem(int index)
     {
         Vector3 position = rangeInfo.RandomPosition();
+        Vector3 scale = Vector3.one * Random.Range(spawMinScale, spawMaxScale);
         //GameObject newItem = Instantiate(itemPrefab, position, Quaternion.identity);
-        GameObject newItem = pickUpItemPool.Borrow(position, Quaternion.identity, pickUpItemPool.transform);
+        GameObject newItem = pickUpItemPool.Borrow(position, Quaternion.identity, scale, pickUpItemPool.transform);
         int count = Random.Range(minItemGroupCount, maxItemGroupCount + 1);
         PickUp item = newItem.GetComponent<PickUp>();
         item.itemGroup = new ItemGroup(itemInfos[index].Clone(), count);
         return newItem;
+    }
+
+    public void ClearItems()
+    {
+        foreach (GameObject tempGO in scenePickUpList)
+        {
+            IPoolWater poolWater = tempGO.GetComponent<IPoolWater>();
+            if (poolWater != null) pickUpItemPool.GiveBack(poolWater);
+            else Destroy(tempGO);
+        }
+        scenePickUpList.Clear();
     }
 
     private void OnPickUp(BackpackManager sender, PickUpEventDate eventDate)
@@ -72,7 +108,7 @@ public class ItemManager : MonoBehaviour
                 scenePickUpList.Remove(eventDate.pickUpItem.gameObject);
                 break;
             case PlayerFaction.Ghost:
-                scenePickUpList.Clear();
+                ClearItems();
                 break;
         }
     }

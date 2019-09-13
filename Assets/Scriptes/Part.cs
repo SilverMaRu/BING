@@ -2,36 +2,25 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public delegate void TouchDelegate(Part sender, TouchEventDate eventDate);
+public delegate void TouchDelegate(Part sender, TouchEventData eventDate);
 public class Part : MonoBehaviour
 {
     public event TouchDelegate TouchEvent;
 
     public PartType partType = PartType.Body;
-    public bool isEnable { get; private set; } = false;
     public PartManager partManager { get; set; }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (isEnable && other.tag.Equals("PlayerPart"))
+        if (other.tag.Equals("PlayerPart"))
         {
             Part otherPart = other.GetComponent<Part>();
-            if(otherPart != null && TouchEvent != null && otherPart.isEnable)
+            if (otherPart != null && !otherPart.partManager.Equals(partManager) && TouchEvent != null)
             {
                 Debug.Log(partManager.gameObject.name + " & " + other.name + " Touch");
-                TouchEvent(this, new TouchEventDate(otherPart));
+                TouchEvent(this, new TouchEventData(otherPart));
             }
         }
-    }
-
-    public void Disable()
-    {
-        isEnable = false;
-    }
-
-    public void SetEnable(PlayerFaction onwerFaction)
-    {
-        isEnable = onwerFaction == PlayerFaction.People && partType == PartType.Body || onwerFaction == PlayerFaction.Ghost && partType == PartType.RightHand;
     }
 }
 
@@ -54,11 +43,11 @@ public enum PartType
     RightFoot
 }
 
-public class TouchEventDate
+public class TouchEventData
 {
     public Part otherPart;
 
-    public TouchEventDate(Part otherPart)
+    public TouchEventData(Part otherPart)
     {
         this.otherPart = otherPart;
     }

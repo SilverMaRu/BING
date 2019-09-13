@@ -19,7 +19,25 @@ public class ActivityManager : MonoBehaviour
 
     public bool loopingActivity { get { return currentActivityList.Count > 0; } }
 
+    // 是否处于耐力惩罚
     public bool isPunishing { get; set; }
+    // 是否处于冻结状态
+    public bool isBinging
+    {
+        get
+        {
+            bool result = false;
+            foreach(ActivityBase tempActivity in currentActivities)
+            {
+                if(tempActivity is ActivityBing)
+                {
+                    result = true;
+                    break;
+                }
+            }
+            return result;
+        }
+    }
 
     private GameObject rootGO;
 

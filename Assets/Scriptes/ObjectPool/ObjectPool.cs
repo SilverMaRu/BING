@@ -33,11 +33,17 @@ public class ObjectPool : MonoBehaviour
 
     public GameObject Borrow(Vector3 position, Quaternion rotation, Transform parent)
     {
+        return Borrow(position, rotation, Vector3.one, parent);
+    }
+
+    public GameObject Borrow(Vector3 position, Quaternion rotation, Vector3 localScale, Transform parent)
+    {
         if(restingWaterList.Count <= 0) AddRestingWater(increaseSize);
         IPoolWater poolWater = restingWaterList[0];
         Transform transform = (poolWater as Component).transform;
         transform.position = position;
         transform.rotation = rotation;
+        transform.localScale = localScale;
         transform.parent = parent;
         poolWater.Work();
         workingWaterList.Add(poolWater);
